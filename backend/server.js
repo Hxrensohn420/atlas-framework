@@ -23,29 +23,59 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'atlas-backend', timestamp: new Date().toISOString() });
 });
 
-// VPN Nodes API
+// Import mock data
+const { mockVPNNodes } = require('./mock-data-frontend-format');
+
+// In-memory storage (for quick dev)
+let vpnNodes = [...mockVPNNodes];
+
+// VPN Nodes API (mock version for fast dev)
 app.get('/api/vpn/nodes', async (req, res) => {
+  // Try DB first, fallback to mock
   try {
     const result = await pool.query('SELECT * FROM vpn_nodes ORDER BY created_at DESC');
-    res.json(result.rows);
+    if (result.rows.length > 0) {
+      res.json(result.rows);
+    } else {
+      // No DB data, use mock
+      res.json(vpnNodes);
+    }
   } catch (err) {
-    console.error('Error fetching VPN nodes:', err);
-    res.status(500).json({ error: 'Database error' });
+    console.log('DB not ready, using mock data');
+    res.json(vpnNodes);
   }
 });
 
 app.post('/api/vpn/nodes', async (req, res) => {
-  const { provider, region, instance_type, public_ip } = req.body;
-  try {
-    const result = await pool.query(
-      'INSERT INTO vpn_nodes (provider, region, instance_type, public_ip, status) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [provider, region, instance_type, public_ip, 'active']
-    );
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error('Error creating VPN node:', err);
-    res.status(500).json({ error: 'Database error' });
+  const { provider, region, instance_type, public_ip, location, coordinates } = req.body;
+  
+  // Mock version - in-memory
+  const newNode = {
+    id: vpnNodes.length + 1,
+    provider,
+    region,
+    instance_type,
+    public_ip,
+    location,
+    coordinates,
+    status: 'active',
+    created_at: new Date().toISOString()
+  };
+  
+  vpnNodes.push(newNode);
+  res.json(newNode);
+});
+
+app.delete('/api/vpn/nodes/:id', async (req, res) => {
+  const { id } = req.params;
+  const index = vpnNodes.findIndex(n => n.id === parseInt(id));
+  
+  if (index === -1) {
+    return res.status(404).json({ error: 'Node not found' });
   }
+  
+  const deleted = vpnNodes.splice(index, 1)[0];
+  res.json({ success: true, deleted });
 });
 
 // Axiom Fleets API

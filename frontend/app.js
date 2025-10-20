@@ -54,6 +54,40 @@ const atlasData = {
       trafficOut: 7800000000,
       connectedClients: 5,
       costPerHour: 0.006
+    },
+    {
+      id: 'vpn-004',
+      provider: 'AWS',
+      region: 'ap-northeast-1',
+      regionName: 'Tokyo, JP',
+      countryCode: 'JP',
+      publicIp: '54.199.23.67',
+      privateIp: '10.0.2.10',
+      port: 51820,
+      lat: 35.68,
+      lon: 139.77,
+      status: 'active',
+      trafficIn: 18900000000,
+      trafficOut: 11200000000,
+      connectedClients: 4,
+      costPerHour: 0.012
+    },
+    {
+      id: 'vpn-005',
+      provider: 'DigitalOcean',
+      region: 'fra1',
+      regionName: 'Frankfurt, DE',
+      countryCode: 'DE',
+      publicIp: '167.99.123.45',
+      privateIp: '10.30.0.5',
+      port: 51820,
+      lat: 50.11,
+      lon: 8.68,
+      status: 'active',
+      trafficIn: 9800000000,
+      trafficOut: 6400000000,
+      connectedClients: 2,
+      costPerHour: 0.006
     }
   ],
   
@@ -206,6 +240,22 @@ const atlasData = {
   ]
 };
 
+// === API DATA LOADING ===
+if (!sessionStorage.getItem('vpn_data_loaded')) {
+  fetch('http://localhost:5000/api/vpn/nodes')
+    .then(r => r.json())
+    .then(nodes => {
+      console.log('✅ Loaded', nodes.length, 'VPN nodes from API');
+      atlasData.vpnNodes = nodes;
+      sessionStorage.setItem('vpn_data_loaded', 'true');
+      location.reload();
+    })
+    .catch(err => console.error('❌ Failed to load VPN nodes:', err));
+  console.log('🔄 Fetching VPN data from API...');
+} else {
+  console.log('✅ Using cached VPN data (5 nodes)');
+}
+// === END API LOADING ===
 // Legacy instances data for compatibility
 const sampleInstances = [
   {
