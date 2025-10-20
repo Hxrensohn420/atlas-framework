@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Atlas Framework - Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            padding: 40px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #16213e;
+            padding: 30px;
+            border-radius: 10px;
+        }
+        h1 { color: #0f4c75; }
+        .status { 
+            padding: 15px;
+            background: #0f3460;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Atlas Framework - Minimal Test</h1>
+        
+        <div class="status">
+            <h3>✅ Server Status: ONLINE</h3>
+            <p>Timestamp: <span id="time"></span></p>
+        </div>
+        
+        <div class="status">
+            <h3>📊 Components</h3>
+            <ul>
+                <li>✅ HTTP Server: Running on Port 3000</li>
+                <li>✅ HTML/CSS: Loaded</li>
+                <li>✅ JavaScript: Working</li>
+                <li>❌ Backend API: Not Connected</li>
+                <li>❌ Database: Not Connected</li>
+            </ul>
+        </div>
+        
+        <div class="status">
+            <h3>🔧 Next Steps</h3>
+            <ol>
+                <li>Backend Server erstellen (Node.js Express)</li>
+                <li>Database Setup (PostgreSQL)</li>
+                <li>API Routes implementieren</li>
+                <li>Frontend mit Backend verbinden</li>
+            </ol>
+        </div>
+    </div>
+    
+    <script>
+        // Simple JS Test
+        document.getElementById('time').textContent = new Date().toLocaleString();
+        console.log('✅ JavaScript is working!');
+        
+        // Test if original app.js has errors
+        fetch('./app.js')
+            .then(r => r.text())
+            .then(code => {
+                console.log('📄 app.js size:', code.length, 'bytes');
+                console.log('⚠️ app.js requires backend API at /api/*');
+            })
+            .catch(e => console.error('❌ Error loading app.js:', e));
+    </script>
+</body>
+</html>

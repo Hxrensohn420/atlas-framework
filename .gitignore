@@ -1,0 +1,52 @@
+# Environment variables (SECRETS!)
+.env.atlas
+.env.atlas.backup
+.env.local
+.env.*.local
+*.env
+
+# Docker volumes & data
+data/
+docker-data/
+postgres-data/
+redis-data/
+keys/
+
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+
+# IDE
+.vscode/
+.idea/
+
+# Temporary
+tmp/
+temp/
+*.tmp
+
+# Sensitive env files
+.env.atlas*
+
+# ALL env files (except .example)
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# ALL env files (except .example)
+.env
+.env.*
+!.env.example
+!.env.*.example
