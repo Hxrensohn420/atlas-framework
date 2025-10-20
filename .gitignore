@@ -1,52 +1,149 @@
-# Environment variables (SECRETS!)
-.env.atlas
-.env.atlas.backup
+cd ~/cloud-dashboard/exported-assets
+
+cat > .gitignore << 'GITIGNORE'
+# ============================================================================
+# Atlas Framework - Git Ignore Configuration
+# ============================================================================
+
+# ============================================================================
+# ENVIRONMENT FILES (SECRETS!) - NEVER COMMIT!
+# ============================================================================
+# Block ALL .env files except .example templates
+.env
+.env.*
 .env.local
 .env.*.local
 *.env
 
-# Docker volumes & data
+# Allow .example files (templates without secrets)
+!.env.example
+!.env.*.example
+
+# Legacy env files
+.env.atlas*
+
+
+# ============================================================================
+# DOCKER VOLUMES & DATA
+# ============================================================================
 data/
 docker-data/
 postgres-data/
 redis-data/
-keys/
+axiom-data/
+kong-data/
 
-# Node modules
+
+# ============================================================================
+# KEYS & CERTIFICATES (CRITICAL SECURITY!)
+# ============================================================================
+keys/
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# Allow keys directory structure (but not actual keys)
+!keys/.gitkeep
+
+
+# ============================================================================
+# NODE.JS
+# ============================================================================
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.npm/
+.yarn/
+package-lock.json
+yarn.lock
 
-# Logs
+
+# ============================================================================
+# LOGS
+# ============================================================================
 *.log
 logs/
+*.log.*
+npm-debug.log
+yarn-debug.log
 
-# OS files
+
+# ============================================================================
+# OPERATING SYSTEM FILES
+# ============================================================================
+# macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
 Thumbs.db
-*.swp
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
 
-# IDE
+# Linux
+.directory
+
+
+# ============================================================================
+# IDE & EDITORS
+# ============================================================================
+# VSCode
 .vscode/
-.idea/
+*.code-workspace
 
-# Temporary
+# IntelliJ / JetBrains
+.idea/
+*.iml
+*.iws
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+
+# ============================================================================
+# TEMPORARY FILES
+# ============================================================================
 tmp/
 temp/
 *.tmp
+*.temp
+*.cache
 
-# Sensitive env files
-.env.atlas*
 
-# ALL env files (except .example)
-.env
-.env.*
-!.env.example
-!.env.*.example
+# ============================================================================
+# DATABASE FILES
+# ============================================================================
+*.sqlite
+*.sqlite3
+*.db
 
-# ALL env files (except .example)
-.env
-.env.*
-!.env.example
-!.env.*.example
+
+# ============================================================================
+# DOCKER
+# ============================================================================
+.dockerignore
+
+
+# ============================================================================
+# BUILD ARTIFACTS
+# ============================================================================
+dist/
+build/
+out/
+*.zip
+*.tar
+*.tar.gz
+GITIGNORE
+
+echo "✅ Clean .gitignore created!"
