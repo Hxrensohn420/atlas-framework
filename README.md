@@ -223,3 +223,123 @@ This is a security research tool. Use responsibly and ethically. The authors are
 ---
 
 **Built with ❤️ for security researchers and infrastructure engineers**
+
+---
+
+## 🚀 Production Deployment (AWS EC2)
+
+### Prerequisites
+
+- AWS Account
+- EC2 Instance: **t3.medium** (2 vCPU, 4GB RAM)
+- OS: **Ubuntu 22.04 LTS**
+- Storage: **30GB** GP3/GP2
+- Security Group with ports: **22, 80, 443, 3000, 5000, 8000**
+
+### Quick Deploy
+
+#### 1. Launch EC2 Instance
+
+AWS Console:
+- Instance Type: t3.medium
+- AMI: Ubuntu 22.04 LTS
+- Storage: 30GB
+- Security Group: Allow ports 22, 80, 443, 3000, 5000, 8000
+- Key Pair: Download and save your .pem file
+text
+
+#### 2. SSH into Instance
+
+ssh -i your-key.pem ubuntu@<YOUR_EC2_IP>
+
+text
+
+#### 3. Clone and Deploy
+
+Clone repository
+git clone https://github.com/Hxrensohn420/atlas-framework.git
+cd atlas-framework
+
+Run deployment script
+chmod +x deploy.sh
+./deploy.sh
+
+Script will:
+- Install Docker & Docker Compose
+- Generate secure secrets
+- Configure environment
+- Start all services
+- Display credentials and access URLs
+text
+
+#### 4. Post-Deployment Setup
+
+1. Copy Axiom SSH key (for Axiom integration)
+nano keys/axiom_controller.pem
+
+Paste your Axiom controller SSH key
+chmod 600 keys/axiom_controller.pem
+
+2. Add real AWS credentials
+nano .env
+
+Update AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
+3. Restart services
+docker-compose -f docker-compose-atlas.yml restart
+
+text
+
+#### 5. Access Atlas
+
+Dashboard: http://<YOUR_EC2_IP>:3000
+Backend API: http://<YOUR_EC2_IP>:5000
+Kong Gateway: http://<YOUR_EC2_IP>:8000
+
+text
+
+### Credentials
+
+All generated credentials are saved to `~/atlas-credentials.txt` on the EC2 instance.
+
+### Useful Commands
+
+View logs
+docker-compose -f docker-compose-atlas.yml logs -f
+
+Restart specific service
+docker-compose -f docker-compose-atlas.yml restart backend
+
+Check status
+docker-compose -f docker-compose-atlas.yml ps
+
+Stop Atlas
+docker-compose -f docker-compose-atlas.yml down
+
+Full cleanup (WARNING: Deletes all data!)
+docker-compose -f docker-compose-atlas.yml down -v
+
+text
+
+### Troubleshooting
+
+**Services not starting:**
+Check logs
+docker-compose -f docker-compose-atlas.yml logs
+
+Verify Docker group
+newgrp docker
+docker ps
+
+text
+
+**Cannot access from browser:**
+- Check AWS Security Group allows inbound on port 3000
+- Verify EC2 instance has public IP
+- Check if services are running: `docker-compose ps`
+
+**Axiom integration not working:**
+- Verify Axiom SSH key is in `keys/axiom_controller.pem`
+- Check key permissions: `chmod 600 keys/axiom_controller.pem`
+- Test SSH manually: `ssh -i keys/axiom_controller.pem ubuntu@<AXIOM_IP>`
+
+---
