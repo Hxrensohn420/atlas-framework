@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
-
 const app = express();
 const port = process.env.PORT || 3001;
 
@@ -18,10 +17,39 @@ const pool = new Pool({
   password: process.env.POSTGRES_PASSWORD || 'atlas_secure_password'
 });
 
-// Health check
+// ============================================================================
+// IMPORT ROUTES
+// ============================================================================
+const axiomRoutes = require('./routes/axiom');        // NEW: Simple Axiom API
+const unifiedRoutes = require('./routes/unified');    // NEW: Unified advanced API
+
+// ============================================================================
+// REGISTER ROUTES
+// ============================================================================
+app.use('/api/axiom', axiomRoutes);                   // Direct Axiom control
+app.use('/api', unifiedRoutes);                       // Advanced unified API
+
+console.log('✅ Routes registered:');
+console.log('   - /api/axiom/*        (Direct Axiom control)');
+console.log('   - /api/vpn/*          (VPN management)');
+console.log('   - /api/osint/*        (OSINT scans)');
+console.log('   - /api/collection/*   (Collection jobs)');
+console.log('   - /api/analytics/*    (Analytics & costs)');
+
+// ============================================================================
+// HEALTH CHECK
+// ============================================================================
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', service: 'atlas-backend', timestamp: new Date().toISOString() });
+  res.json({ 
+    status: 'ok', 
+    service: 'atlas-backend', 
+    timestamp: new Date().toISOString() 
+  });
 });
+
+// ============================================================================
+// LEGACY MOCK DATA ROUTES (Fallback for quick dev)
+// ============================================================================
 
 // Import mock data
 const { mockVPNNodes } = require('./mock-data-frontend-format');
@@ -29,8 +57,8 @@ const { mockVPNNodes } = require('./mock-data-frontend-format');
 // In-memory storage (for quick dev)
 let vpnNodes = [...mockVPNNodes];
 
-// VPN Nodes API (mock version for fast dev)
-app.get('/api/vpn/nodes', async (req, res) => {
+// Legacy VPN Nodes API (fallback if routes don't work)
+app.get('/api/vpn/nodes/mock', async (req, res) => {
   // Try DB first, fallback to mock
   try {
     const result = await pool.query('SELECT * FROM vpn_nodes ORDER BY created_at DESC');
@@ -46,7 +74,7 @@ app.get('/api/vpn/nodes', async (req, res) => {
   }
 });
 
-app.post('/api/vpn/nodes', async (req, res) => {
+app.post('/api/vpn/nodes/mock', async (req, res) => {
   const { provider, region, instance_type, public_ip, location, coordinates } = req.body;
   
   // Mock version - in-memory
@@ -66,7 +94,7 @@ app.post('/api/vpn/nodes', async (req, res) => {
   res.json(newNode);
 });
 
-app.delete('/api/vpn/nodes/:id', async (req, res) => {
+app.delete('/api/vpn/nodes/mock/:id', async (req, res) => {
   const { id } = req.params;
   const index = vpnNodes.findIndex(n => n.id === parseInt(id));
   
@@ -78,8 +106,8 @@ app.delete('/api/vpn/nodes/:id', async (req, res) => {
   res.json({ success: true, deleted });
 });
 
-// Axiom Fleets API
-app.get('/api/axiom/fleets', async (req, res) => {
+// Legacy Axiom Fleets API (fallback)
+app.get('/api/axiom/fleets/mock', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM axiom_fleets ORDER BY created_at DESC');
     res.json(result.rows);
@@ -89,8 +117,8 @@ app.get('/api/axiom/fleets', async (req, res) => {
   }
 });
 
-// OSINT Jobs API
-app.get('/api/osint/jobs', async (req, res) => {
+// Legacy OSINT Jobs API (fallback)
+app.get('/api/osint/jobs/mock', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM osint_jobs ORDER BY created_at DESC');
     res.json(result.rows);
@@ -100,8 +128,8 @@ app.get('/api/osint/jobs', async (req, res) => {
   }
 });
 
-// Collection Jobs API
-app.get('/api/collections/jobs', async (req, res) => {
+// Legacy Collection Jobs API (fallback)
+app.get('/api/collections/jobs/mock', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM collection_jobs ORDER BY created_at DESC');
     res.json(result.rows);
@@ -111,13 +139,18 @@ app.get('/api/collections/jobs', async (req, res) => {
   }
 });
 
-// Start server
+// ============================================================================
+// START SERVER
+// ============================================================================
 app.listen(port, () => {
   console.log(`🚀 Atlas Backend API running on port ${port}`);
   console.log(`📊 Health check: http://localhost:${port}/health`);
+  console.log(`📡 API endpoints: http://localhost:${port}/api`);
 });
 
-// Graceful shutdown
+// ============================================================================
+// GRACEFUL SHUTDOWN
+// ============================================================================
 process.on('SIGTERM', () => {
   console.log('SIGTERM received, shutting down gracefully');
   pool.end();
