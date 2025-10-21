@@ -1,4 +1,4 @@
-// backend/src/routes/unified.js - Atlas Framework Unified API
+// backend/routes/unified.js - Atlas Framework Unified API
 const express = require('express');
 const router = express.Router();
 
@@ -8,6 +8,16 @@ const axiomService = require('../services/axiomService');
 const ars0nService = require('../services/ars0nService');
 const collectionService = require('../services/collectionService');
 const analyticsService = require('../services/analyticsService');
+
+// ============================================================================
+// TEMPORARY: Mock user middleware (until we have auth)
+// ============================================================================
+router.use((req, res, next) => {
+  if (!req.user) {
+    req.user = { userId: 1 }; // Mock user ID for development
+  }
+  next();
+});
 
 // ============================================================================
 // VPN MANAGEMENT ENDPOINTS
@@ -70,82 +80,106 @@ router.delete('/vpn/:nodeId', async (req, res) => {
 });
 
 // ============================================================================
-// AXIOM FLEET MANAGEMENT ENDPOINTS
+// AXIOM FLEET MANAGEMENT ENDPOINTS (UPDATED)
 // ============================================================================
 
-// Get all fleets
+// Get all fleets (NEW method)
 router.get('/axiom/fleets', async (req, res) => {
   try {
-    const fleets = await axiomService.getAllFleets(req.user.userId);
-    res.json({ success: true, fleets });
+    const result = await axiomService.getFleetStatus();
+    res.json({ 
+      success: result.success, 
+      fleets: result.instances || [],
+      total: result.total || 0
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching fleets' });
+    res.status(500).json({ message: 'Error fetching fleets', error: error.message });
   }
 });
 
-// Deploy new fleet
+// Get fleet instances (same as /api/axiom/instances)
+router.get('/axiom/instances', async (req, res) => {
+  try {
+    const result = await axiomService.listInstances();
+    res.status(result.success ? 200 : 500).json(result);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching instances', error: error.message });
+  }
+});
+
+// Deploy new fleet (UPDATED)
 router.post('/axiom/fleet/deploy', async (req, res) => {
   try {
-    const { fleetName, provider, instanceType, regions, quantity, vpnNodeId, modules } = req.body;
-
-    const fleet = await axiomService.deployFleet({
-      userId: req.user.userId,
-      fleetName,
-      provider,
-      instanceType,
-      regions,
-      quantity,
-      vpnNodeId,
-      modules
-    });
-
-    res.json({ success: true, fleet });
+    const { prefix, count, regions } = req.body;
+    
+    if (!prefix || !count) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Prefix and count are required' 
+      });
+    }
+    
+    const result = await axiomService.deployFleet(prefix, count, regions || []);
+    res.status(result.success ? 200 : 500).json(result);
   } catch (error) {
     res.status(500).json({ message: 'Error deploying fleet', error: error.message });
   }
 });
 
-// Get fleet details with instances
-router.get('/axiom/fleet/:fleetId', async (req, res) => {
+// Get fleet details with instances (UPDATED)
+router.get('/axiom/fleet/:pattern', async (req, res) => {
   try {
-    const fleet = await axiomService.getFleetDetails(req.params.fleetId, req.user.userId);
-    res.json({ success: true, fleet });
+    const result = await axiomService.getFleetStatus();
+    
+    // Filter instances by pattern
+    const pattern = req.params.pattern;
+    const matchingInstances = result.instances.filter(i => 
+      i.name.includes(pattern) || i.name.match(new RegExp(pattern))
+    );
+    
+    res.json({ 
+      success: true, 
+      instances: matchingInstances,
+      total: matchingInstances.length
+    });
   } catch (error) {
     res.status(404).json({ message: 'Fleet not found' });
   }
 });
 
-// Scale fleet
-router.post('/axiom/fleet/:fleetId/scale', async (req, res) => {
+// Terminate fleet (UPDATED)
+router.delete('/axiom/fleet/:pattern', async (req, res) => {
   try {
-    const { action, count } = req.body; // action: 'up' or 'down'
-    await axiomService.scaleFleet(req.params.fleetId, action, count, req.user.userId);
-    res.json({ success: true, message: `Fleet scaled ${action}` });
+    const result = await axiomService.removeInstances(req.params.pattern);
+    res.status(result.success ? 200 : 500).json(result);
   } catch (error) {
-    res.status(500).json({ message: 'Error scaling fleet' });
+    res.status(500).json({ message: 'Error terminating fleet', error: error.message });
   }
 });
 
-// Terminate fleet
-router.delete('/axiom/fleet/:fleetId', async (req, res) => {
-  try {
-    await axiomService.terminateFleet(req.params.fleetId, req.user.userId);
-    res.json({ success: true, message: 'Fleet terminated' });
-  } catch (error) {
-    res.status(500).json({ message: 'Error terminating fleet' });
-  }
-});
-
-// Execute command on fleet
-router.post('/axiom/fleet/:fleetId/execute', async (req, res) => {
+// Execute command on fleet (UPDATED)
+router.post('/axiom/fleet/:pattern/execute', async (req, res) => {
   try {
     const { command } = req.body;
-    const results = await axiomService.executeCommand(req.params.fleetId, command, req.user.userId);
-    res.json({ success: true, results });
+    
+    if (!command) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Command is required' 
+      });
+    }
+    
+    // Select instances first
+    await axiomService.selectInstances(req.params.pattern);
+    
+    // Execute command
+    const result = await axiomService.execOnInstances(command);
+    res.status(result.success ? 200 : 500).json(result);
   } catch (error) {
-    res.status(500).json({ message: 'Error executing command' });
+    res.status(500).json({ message: 'Error executing command', error: error.message });
   }
 });
+
 
 // ============================================================================
 // ARS0N OSINT ENDPOINTS
