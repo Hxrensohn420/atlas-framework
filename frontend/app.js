@@ -605,7 +605,7 @@ function LoginPage() {
             <input
               type="email"
               className="form-input"
-              value={email}
+              value="admin@cloud.dev"
               onChange={(e) => setEmail(e.target.value)}
               placeholder="admin@cloud.dev"
               required
@@ -617,7 +617,7 @@ function LoginPage() {
             <input
               type="password"
               className="form-input"
-              value={password}
+              value="password"
               onChange={(e) => setPassword(e.target.value)}
               placeholder="password"
               required
