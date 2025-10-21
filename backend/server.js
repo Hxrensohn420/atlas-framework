@@ -22,12 +22,13 @@ const pool = new Pool({
 // ============================================================================
 const axiomRoutes = require('./routes/axiom');        // NEW: Simple Axiom API
 const unifiedRoutes = require('./routes/unified');    // NEW: Unified advanced API
-
+const authRoutes = require('./routes/auth');          // NEW: Simple AUTH API      // Auth routes (login, signup, etc.)
 // ============================================================================
 // REGISTER ROUTES
 // ============================================================================
 app.use('/api/axiom', axiomRoutes);                   // Direct Axiom control
-app.use('/api', unifiedRoutes);                       // Advanced unified API
+app.use('/api', unifiedRoutes);                       // Advanced unified API 
+app.use('/api/auth', authRoutes);                     // Auth routes
 
 console.log('✅ Routes registered:');
 console.log('   - /api/axiom/*        (Direct Axiom control)');

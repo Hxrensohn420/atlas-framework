@@ -453,13 +453,23 @@ function AuthProvider({ children }) {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    if (email === 'admin@cloud.dev' && password === 'password') {
-      // Simulate storing session token (in production, would be handled securely)
-      // const token = 'jwt_token_' + Date.now();
-      setIsAuthenticated(true);
-      return { success: true };
-    } else {
-      return { success: false, error: 'Invalid credentials' };
+// Call backend API
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        localStorage.setItem('atlas_token', data.token);
+        setIsAuthenticated(true);
+        return { success: true };
+      } else {
+        return { success: false, error: data.message || 'Invalid credentials' };
+      }
+    } catch (error) {
+      return { success: false, error: 'Connection error' };
     }
   };
 
@@ -605,7 +615,7 @@ function LoginPage() {
             <input
               type="email"
               className="form-input"
-              value="admin@cloud.dev"
+              value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="admin@cloud.dev"
               required
@@ -617,7 +627,7 @@ function LoginPage() {
             <input
               type="password"
               className="form-input"
-              value="password"
+              value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="password"
               required
