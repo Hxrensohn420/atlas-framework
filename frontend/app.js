@@ -242,7 +242,7 @@ const atlasData = {
 
 // === API DATA LOADING ===
 if (!sessionStorage.getItem('vpn_data_loaded')) {
-  fetch('http://localhost:5000/api/vpn/nodes')
+  fetch('/api/vpn/nodes')
     .then(r => r.json())
     .then(nodes => {
       console.log('✅ Loaded', nodes.length, 'VPN nodes from API');
