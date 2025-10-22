@@ -212,8 +212,9 @@ services:
     container_name: atlas-axiom-proxy
     environment:
       - AXIOM_CONTROLLER_HOST=${AXIOM_CONTROLLER_IP}
-      - AXIOM_SSH_KEY=/keys/axiom_rsa
+      - AXIOM_SSH_KEY=${AXIOM_SSH_KEY}
       - REDIS_URL=redis://redis:6379
+      - AXIOM_SSH_USER=${AXIOM_SSH_USER}
     networks:
       - atlas-net
     volumes:
