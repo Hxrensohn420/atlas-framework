@@ -1,0 +1,116 @@
+[
+  {
+    "method": "GET",
+    "path": "/api/axiom/controllers",
+    "description": "List all Axiom controllers",
+    "status": "new"
+  },
+  {
+    "method": "POST",
+    "path": "/api/axiom/controllers",
+    "description": "Add new controller",
+    "status": "new"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/axiom/controllers/:id",
+    "description": "Update controller",
+    "status": "new"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/axiom/controllers/:id",
+    "description": "Delete controller",
+    "status": "new"
+  },
+  {
+    "method": "POST",
+    "path": "/api/axiom/controllers/:id/activate",
+    "description": "Set active controller",
+    "status": "new"
+  },
+  {
+    "method": "GET",
+    "path": "/api/axiom/instances",
+    "description": "List instances (axiom-ls)",
+    "status": "existing"
+  },
+  {
+    "method": "POST",
+    "path": "/api/axiom/init",
+    "description": "Deploy single instance",
+    "status": "existing"
+  },
+  {
+    "method": "POST",
+    "path": "/api/axiom/fleet",
+    "description": "Deploy fleet",
+    "status": "enhanced"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/axiom/instances/:id",
+    "description": "Terminate instance",
+    "status": "existing"
+  },
+  {
+    "method": "POST",
+    "path": "/api/axiom/exec",
+    "description": "Execute command",
+    "status": "existing"
+  },
+  {
+    "method": "GET",
+    "path": "/api/axiom/regions",
+    "description": "Get GCP regions with coordinates",
+    "status": "new"
+  },
+  {
+    "method": "GET",
+    "path": "/api/axiom/instance-types",
+    "description": "Get instance types with pricing",
+    "status": "new"
+  },
+  {
+    "method": "GET",
+    "path": "/api/axiom/modules",
+    "description": "Get scan modules",
+    "status": "new"
+  },
+  {
+    "method": "POST",
+    "path": "/api/axiom/scan",
+    "description": "Start distributed scan",
+    "status": "new"
+  },
+  {
+    "method": "GET",
+    "path": "/api/axiom/scans",
+    "description": "List all scans",
+    "status": "new"
+  },
+  {
+    "method": "GET",
+    "path": "/api/axiom/scans/:id",
+    "description": "Get scan details",
+    "status": "new"
+  },
+  {
+    "method": "POST",
+    "path": "/api/axiom/files/upload",
+    "description": "Upload file to fleet",
+    "status": "new"
+  },
+  {
+    "method": "GET",
+    "path": "/api/axiom/files/:id/download",
+    "description": "Download scan results",
+    "status": "new"
+  },
+  {
+    "method": "WS",
+    "path": "/terminal",
+    "description": "WebSocket terminal connection",
+    "status": "new"
+  }
+]

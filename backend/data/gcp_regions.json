@@ -1,0 +1,80 @@
+[
+  {
+    "id": "europe-west1",
+    "name": "Belgium",
+    "lat": 50.85,
+    "lon": 4.35
+  },
+  {
+    "id": "europe-west2",
+    "name": "London",
+    "lat": 51.51,
+    "lon": -0.13
+  },
+  {
+    "id": "europe-west3",
+    "name": "Frankfurt",
+    "lat": 50.11,
+    "lon": 8.68
+  },
+  {
+    "id": "europe-west4",
+    "name": "Netherlands",
+    "lat": 52.37,
+    "lon": 4.89
+  },
+  {
+    "id": "europe-north1",
+    "name": "Finland",
+    "lat": 60.17,
+    "lon": 24.94
+  },
+  {
+    "id": "us-central1",
+    "name": "Iowa, USA",
+    "lat": 41.26,
+    "lon": -95.86
+  },
+  {
+    "id": "us-east1",
+    "name": "South Carolina, USA",
+    "lat": 33.84,
+    "lon": -81.16
+  },
+  {
+    "id": "us-east4",
+    "name": "Virginia, USA",
+    "lat": 37.43,
+    "lon": -78.66
+  },
+  {
+    "id": "us-west1",
+    "name": "Oregon, USA",
+    "lat": 45.52,
+    "lon": -122.68
+  },
+  {
+    "id": "us-west2",
+    "name": "Los Angeles, USA",
+    "lat": 34.05,
+    "lon": -118.24
+  },
+  {
+    "id": "asia-southeast1",
+    "name": "Singapore",
+    "lat": 1.35,
+    "lon": 103.82
+  },
+  {
+    "id": "asia-northeast1",
+    "name": "Tokyo, Japan",
+    "lat": 35.68,
+    "lon": 139.69
+  },
+  {
+    "id": "asia-south1",
+    "name": "Mumbai, India",
+    "lat": 19.08,
+    "lon": 72.88
+  }
+]

@@ -1,0 +1,50 @@
+[
+  {
+    "id": "nuclei",
+    "name": "Nuclei",
+    "description": "Fast and customizable vulnerability scanner",
+    "default_args": "-t cves/"
+  },
+  {
+    "id": "httpx",
+    "name": "HTTPx",
+    "description": "HTTP toolkit with various probe capabilities",
+    "default_args": "-silent"
+  },
+  {
+    "id": "nmap",
+    "name": "Nmap",
+    "description": "Network exploration and security auditing",
+    "default_args": "-sV -T4"
+  },
+  {
+    "id": "masscan",
+    "name": "Masscan",
+    "description": "TCP port scanner, spews SYN packets",
+    "default_args": "--rate=10000"
+  },
+  {
+    "id": "subfinder",
+    "name": "Subfinder",
+    "description": "Subdomain discovery tool",
+    "default_args": "-silent"
+  },
+  {
+    "id": "dnsx",
+    "name": "DNSx",
+    "description": "Fast and multi-purpose DNS toolkit",
+    "default_args": "-silent"
+  },
+  {
+    "id": "gowitness",
+    "name": "Gowitness",
+    "description": "Web screenshot utility",
+    "default_args": "screenshot"
+  },
+  {
+    "id": "ffuf",
+    "name": "FFuF",
+    "description": "Fast web fuzzer",
+    "default_args": "-w /path/to/wordlist"
+  }
+]
