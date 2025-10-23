@@ -1,14 +1,26 @@
--- Atlas Framework - Axiom Dashboard Database Schema
--- Run: psql -U postgres -d atlas_db -f backend/db/axiom-migrations.sql
+-- ============================================================================
+-- Atlas Framework - Axiom Integration Schema
+-- ============================================================================
+-- This adds Axiom-specific tables that extend the base atlas_schema.sql
+-- Run AFTER atlas_schema.sql has been loaded
+-- ============================================================================
 
--- Axiom Controllers table (multi-controller support)
-CREATE TABLE IF NOT EXISTS axiom_controllers (
+-- Drop existing Axiom tables if they conflict (clean slate)
+DROP TABLE IF EXISTS axiom_logs CASCADE;
+DROP TABLE IF EXISTS axiom_files CASCADE;
+DROP TABLE IF EXISTS axiom_scans CASCADE;
+DROP TABLE IF EXISTS axiom_controllers CASCADE;
+
+-- ============================================================================
+-- Axiom Controllers (Multi-controller support)
+-- ============================================================================
+CREATE TABLE axiom_controllers (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE,
     host VARCHAR(255) NOT NULL,
     ssh_user VARCHAR(100) DEFAULT 'ubuntu',
     ssh_port INTEGER DEFAULT 22,
-    ssh_key_path VARCHAR(500) DEFAULT '/app/keys/axiom_controller_key',
+    ssh_key_path VARCHAR(500),
     provider VARCHAR(50) DEFAULT 'gcp',
     region VARCHAR(100),
     is_active BOOLEAN DEFAULT false,
@@ -18,46 +30,13 @@ CREATE TABLE IF NOT EXISTS axiom_controllers (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Axiom Instances table
-CREATE TABLE IF NOT EXISTS axiom_instances (
+-- ============================================================================
+-- Axiom Scans (uses axiom_fleets.id which is UUID from atlas_schema.sql)
+-- ============================================================================
+CREATE TABLE axiom_scans (
     id SERIAL PRIMARY KEY,
     controller_id INTEGER REFERENCES axiom_controllers(id) ON DELETE CASCADE,
-    instance_id VARCHAR(255) NOT NULL,
-    name VARCHAR(255),
-    provider VARCHAR(50),
-    region VARCHAR(100),
-    public_ip VARCHAR(50),
-    private_ip VARCHAR(50),
-    instance_type VARCHAR(100),
-    status VARCHAR(50),
-    cpu_usage DECIMAL(5,2),
-    memory_usage DECIMAL(5,2),
-    cost_per_hour DECIMAL(10,4),
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
-    UNIQUE(controller_id, instance_id)
-);
-
--- Axiom Fleets table
-CREATE TABLE IF NOT EXISTS axiom_fleets (
-    id SERIAL PRIMARY KEY,
-    controller_id INTEGER REFERENCES axiom_controllers(id) ON DELETE CASCADE,
-    name VARCHAR(255) NOT NULL,
-    provider VARCHAR(50),
-    instance_type VARCHAR(100),
-    instance_count INTEGER,
-    regions TEXT[], -- Array of regions
-    status VARCHAR(50) DEFAULT 'pending',
-    preemptible BOOLEAN DEFAULT false,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
-);
-
--- Axiom Scans table
-CREATE TABLE IF NOT EXISTS axiom_scans (
-    id SERIAL PRIMARY KEY,
-    controller_id INTEGER REFERENCES axiom_controllers(id) ON DELETE CASCADE,
-    fleet_id INTEGER REFERENCES axiom_fleets(id) ON DELETE SET NULL,
+    fleet_id UUID REFERENCES axiom_fleets(id) ON DELETE SET NULL,  -- ✅ UUID!
     name VARCHAR(255) NOT NULL,
     scan_module VARCHAR(100) NOT NULL,
     targets TEXT NOT NULL,
@@ -72,8 +51,10 @@ CREATE TABLE IF NOT EXISTS axiom_scans (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Axiom Files table
-CREATE TABLE IF NOT EXISTS axiom_files (
+-- ============================================================================
+-- Axiom Files
+-- ============================================================================
+CREATE TABLE axiom_files (
     id SERIAL PRIMARY KEY,
     controller_id INTEGER REFERENCES axiom_controllers(id) ON DELETE CASCADE,
     original_name VARCHAR(500) NOT NULL,
@@ -85,8 +66,10 @@ CREATE TABLE IF NOT EXISTS axiom_files (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Axiom Command Logs table
-CREATE TABLE IF NOT EXISTS axiom_logs (
+-- ============================================================================
+-- Axiom Command Logs
+-- ============================================================================
+CREATE TABLE axiom_logs (
     id SERIAL PRIMARY KEY,
     controller_id INTEGER REFERENCES axiom_controllers(id) ON DELETE CASCADE,
     command TEXT NOT NULL,
@@ -96,17 +79,58 @@ CREATE TABLE IF NOT EXISTS axiom_logs (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Create indexes for performance
+-- ============================================================================
+-- Update axiom_instances to link to controllers
+-- ============================================================================
+-- Add controller_id to existing axiom_instances table
+DO $$ 
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name='axiom_instances' AND column_name='controller_id'
+    ) THEN
+        ALTER TABLE axiom_instances 
+        ADD COLUMN controller_id INTEGER REFERENCES axiom_controllers(id) ON DELETE CASCADE;
+    END IF;
+END $$;
+
+-- ============================================================================
+-- Update axiom_fleets to link to controllers
+-- ============================================================================
+-- Add controller_id to existing axiom_fleets table
+DO $$ 
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name='axiom_fleets' AND column_name='controller_id'
+    ) THEN
+        ALTER TABLE axiom_fleets 
+        ADD COLUMN controller_id INTEGER REFERENCES axiom_controllers(id) ON DELETE CASCADE;
+    END IF;
+END $$;
+
+-- ============================================================================
+-- Indexes for performance
+-- ============================================================================
 CREATE INDEX IF NOT EXISTS idx_instances_controller ON axiom_instances(controller_id);
 CREATE INDEX IF NOT EXISTS idx_fleets_controller ON axiom_fleets(controller_id);
 CREATE INDEX IF NOT EXISTS idx_scans_controller ON axiom_scans(controller_id);
+CREATE INDEX IF NOT EXISTS idx_scans_fleet ON axiom_scans(fleet_id);
 CREATE INDEX IF NOT EXISTS idx_scans_status ON axiom_scans(status);
 CREATE INDEX IF NOT EXISTS idx_files_controller ON axiom_files(controller_id);
 CREATE INDEX IF NOT EXISTS idx_logs_controller ON axiom_logs(controller_id);
 
--- Insert default controller (update with your actual values)
+-- ============================================================================
+-- Insert default controller
+-- ============================================================================
 INSERT INTO axiom_controllers (name, host, ssh_user, provider, region, is_active, status)
-VALUES ('default-gcp', '13.53.50.201', 'ubuntu', 'gcp', 'europe-north1', true, 'active')
-ON CONFLICT (name) DO NOTHING;
+VALUES ('default-controller', '35.242.197.253', 'ubuntu', 'gcp', 'europe-north1', true, 'active')
+ON CONFLICT (name) DO UPDATE SET 
+    host = EXCLUDED.host,
+    is_active = EXCLUDED.is_active,
+    status = EXCLUDED.status,
+    updated_at = NOW();
 
-COMMIT;
+-- ============================================================================
+-- Done!
+-- ============================================================================
