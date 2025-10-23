@@ -10,10 +10,10 @@ const path = require('path');
 
 // Axiom Configuration from environment (default controller)
 const AXIOM_CONFIG = {
-    host: process.env.AXIOM_CONTROLLER_IP || '13.53.50.201',
-    user: process.env.AXIOM_SSH_USER || 'ubuntu',
-    keyPath: process.env.AXIOM_SSH_KEY || '/app/keys/axiom_controller_key',
-    binaryDir: '/home/ubuntu/.axiom/interact',
+    host: process.env.AXIOM_CONTROLLER_IP || '35.242.197.253',
+    user: process.env.AXIOM_SSH_USER || 'pimmelnase04',
+    keyPath: process.env.AXIOM_SSH_KEY || '/app/keys/wes3',
+    binaryDir: '/home/pimmelnase04/.axiom/interact',
     timeout: 60000, // 60 seconds
     maxBuffer: 10 * 1024 * 1024 // 10MB
 };
