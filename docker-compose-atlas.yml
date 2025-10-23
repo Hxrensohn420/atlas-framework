@@ -117,7 +117,11 @@ services:
       JWT_EXPIRY: 24h
 
       # Database
-      DATABASE_URL: postgresql://atlas:${DB_PASSWORD}@postgres:5432/atlas
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: atlas
+      POSTGRES_USER: atlas
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
 
       # Redis
       REDIS_URL: redis://redis:6379
@@ -135,7 +139,7 @@ services:
       DO_API_TOKEN: ${DO_API_TOKEN}
 
       # Axiom
-      AXIOM_SSH_KEY_PATH: /app/keys/axiom_controller_key  # ✅ FIXED!
+      AXIOM_SSH_KEY_PATH: ${AXIOM_SSH_KEY} # ✅ FIXED!
       AXIOM_CONTROLLER_IP: ${AXIOM_CONTROLLER_IP}
 
       # Security
@@ -172,7 +176,6 @@ services:
       - atlas-net
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./atlas_schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U atlas"]
       interval: 10s
