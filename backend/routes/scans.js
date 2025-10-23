@@ -5,29 +5,34 @@ const express = require('express');
 const router = express.Router();
 
 module.exports = (db) => {
-    const axiomService = require('../services/axiomService');
+  const axiomService = require('../services/axiomService');
 
-    // List all scans
-    router.get('/', async (req, res) => {
-        try {
-            const result = await db.query(`
-                SELECT s.*, c.name as controller_name, f.name as fleet_name
-                FROM axiom_scans s
-                LEFT JOIN axiom_controllers c ON s.controller_id = c.id
-                LEFT JOIN axiom_fleets f ON s.fleet_id = f.id
-                ORDER BY s.created_at DESC
-            `);
-            res.json({ success: true, scans: result.rows });
-        } catch (err) {
-            console.error('❌ Failed to list scans:', err);
-            res.status(500).json({ success: false, error: err.message });
-        }
-    });
-
+  // List all scans
+  router.get('/', async (req, res) => {
+    try {
+      const result = await db.query(`
+        SELECT 
+          s.*, 
+          c.name as controller_name,
+          f.id as fleet_id,
+          f.provider as fleet_provider,
+          f.region as fleet_region
+        FROM axiom_scans s
+        LEFT JOIN axiom_controllers c ON s.controller_id = c.id
+        LEFT JOIN axiom_fleets f ON s.fleet_id = f.id
+        ORDER BY s.created_at DESC
+      `);
+      res.json({ success: true, scans: result.rows });
+    } catch (err) {
+      console.error('❌ Failed to list scans:', err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+  
     // Create new scan
     router.post('/', async (req, res) => {
         try {
-            const { name, scan_module, targets, arguments, fleet_id } = req.body;
+            const { name, scan_module, targets, argumentsTEST, fleet_id } = req.body;
 
             if (!name || !scan_module || !targets) {
                 return res.status(400).json({ 
@@ -50,10 +55,10 @@ module.exports = (db) => {
             // Insert scan record
             const scanResult = await db.query(`
                 INSERT INTO axiom_scans 
-                (controller_id, fleet_id, name, scan_module, targets, arguments, status, started_at)
+                (controller_id, fleet_id, name, scan_module, targets, argumentsTEST, status, started_at)
                 VALUES ($1, $2, $3, $4, $5, $6, 'running', NOW())
                 RETURNING *
-            `, [controller.id, fleet_id, name, scan_module, targets, arguments]);
+            `, [controller.id, fleet_id, name, scan_module, targets, argumentsTEST]);
 
             const scan = scanResult.rows[0];
 
@@ -129,7 +134,7 @@ async function executeAxiomScan(controller, scan, db) {
 
     try {
         // Build axiom-scan command
-        const cmd = `axiom-scan ${scan.targets} -m ${scan.scan_module} ${scan.arguments || ''}`;
+        const cmd = `axiom-scan ${scan.targets} -m ${scan.scan_module} ${scan.argumentsTEST || ''}`;
 
         console.log(`🔍 Executing scan: ${cmd}`);
 

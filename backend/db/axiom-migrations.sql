@@ -31,6 +31,40 @@ CREATE TABLE axiom_controllers (
 );
 
 -- ============================================================================
+-- Axiom Fleets (from atlas_schema.sql - recreate if dropped)
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS axiom_fleets (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(255) NOT NULL,
+    controller_id INTEGER REFERENCES axiom_controllers(id) ON DELETE CASCADE,
+    provider VARCHAR(50) NOT NULL,
+    region VARCHAR(100) NOT NULL,
+    instance_count INTEGER DEFAULT 0,
+    status VARCHAR(50) DEFAULT 'inactive',
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- ============================================================================
+-- Axiom Instances (from atlas_schema.sql - recreate if dropped)
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS axiom_instances (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    controller_id INTEGER REFERENCES axiom_controllers(id) ON DELETE CASCADE,
+    fleet_id UUID REFERENCES axiom_fleets(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    provider VARCHAR(50) NOT NULL,
+    region VARCHAR(100) NOT NULL,
+    public_ip VARCHAR(50),
+    private_ip VARCHAR(50),
+    instance_type VARCHAR(100),
+    status VARCHAR(50) DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+
+-- ============================================================================
 -- Axiom Scans (uses axiom_fleets.id which is UUID from atlas_schema.sql)
 -- ============================================================================
 CREATE TABLE axiom_scans (
@@ -134,3 +168,18 @@ ON CONFLICT (name) DO UPDATE SET
 -- ============================================================================
 -- Done!
 -- ============================================================================
+
+-- ============================================================================
+-- Fix: Add name column to axiom_fleets
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS axiom_fleets (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(255) DEFAULT 'default-fleet',  -- ✅ Add name!
+    controller_id INTEGER REFERENCES axiom_controllers(id) ON DELETE CASCADE,
+    provider VARCHAR(50),
+    region VARCHAR(100),
+    instance_count INTEGER DEFAULT 0,
+    status VARCHAR(50) DEFAULT 'inactive',
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
