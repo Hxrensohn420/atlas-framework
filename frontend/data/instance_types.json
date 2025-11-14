@@ -1,0 +1,65 @@
+[
+  {
+    "id": "e2-micro",
+    "name": "e2-micro (0.25 vCPU, 1GB)",
+    "vcpu": 0.25,
+    "ram": 1,
+    "cost_hourly": 0.0084,
+    "cost_monthly": 6.13,
+    "preemptible_cost": 0.0025
+  },
+  {
+    "id": "e2-small",
+    "name": "e2-small (0.5 vCPU, 2GB)",
+    "vcpu": 0.5,
+    "ram": 2,
+    "cost_hourly": 0.0168,
+    "cost_monthly": 12.26,
+    "preemptible_cost": 0.005
+  },
+  {
+    "id": "e2-medium",
+    "name": "e2-medium (1 vCPU, 4GB)",
+    "vcpu": 1,
+    "ram": 4,
+    "cost_hourly": 0.0335,
+    "cost_monthly": 24.45,
+    "preemptible_cost": 0.0101
+  },
+  {
+    "id": "e2-standard-2",
+    "name": "e2-standard-2 (2 vCPU, 8GB)",
+    "vcpu": 2,
+    "ram": 8,
+    "cost_hourly": 0.067,
+    "cost_monthly": 48.91,
+    "preemptible_cost": 0.0201
+  },
+  {
+    "id": "e2-standard-4",
+    "name": "e2-standard-4 (4 vCPU, 16GB)",
+    "vcpu": 4,
+    "ram": 16,
+    "cost_hourly": 0.134,
+    "cost_monthly": 97.82,
+    "preemptible_cost": 0.0402
+  },
+  {
+    "id": "n1-standard-1",
+    "name": "n1-standard-1 (1 vCPU, 3.75GB)",
+    "vcpu": 1,
+    "ram": 3.75,
+    "cost_hourly": 0.0475,
+    "cost_monthly": 34.68,
+    "preemptible_cost": 0.01
+  },
+  {
+    "id": "n1-standard-2",
+    "name": "n1-standard-2 (2 vCPU, 7.5GB)",
+    "vcpu": 2,
+    "ram": 7.5,
+    "cost_hourly": 0.095,
+    "cost_monthly": 69.35,
+    "preemptible_cost": 0.02
+  }
+]

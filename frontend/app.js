@@ -242,7 +242,7 @@ const atlasData = {
 
 // === API DATA LOADING ===
 if (!sessionStorage.getItem('vpn_data_loaded')) {
-  fetch('http://localhost:5000/api/vpn/nodes')
+  fetch('/api/vpn/nodes')
     .then(r => r.json())
     .then(nodes => {
       console.log('✅ Loaded', nodes.length, 'VPN nodes from API');
@@ -453,13 +453,23 @@ function AuthProvider({ children }) {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    if (email === 'admin@cloud.dev' && password === 'password') {
-      // Simulate storing session token (in production, would be handled securely)
-      // const token = 'jwt_token_' + Date.now();
-      setIsAuthenticated(true);
-      return { success: true };
-    } else {
-      return { success: false, error: 'Invalid credentials' };
+// Call backend API
+    try {
+      const response = await fetch('http://localhost:5000/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        localStorage.setItem('atlas_token', data.token);
+        setIsAuthenticated(true);
+        return { success: true };
+      } else {
+        return { success: false, error: data.message || 'Invalid credentials' };
+      }
+    } catch (error) {
+      return { success: false, error: 'Connection error' };
     }
   };
 
@@ -2504,158 +2514,627 @@ function CollectionsPage() {
 }
 
 // Axiom Orchestration Page
-function AxiomPage() {
-  const { axiomFleets, axiomInstances, vpnNodes } = useContext(AppContext);
-  const { showToast } = useContext(ToastContext);
-  const [showDeployFleetModal, setShowDeployFleetModal] = useState(false);
+// ═══════════════════════════════════════════════════════════════
+// AXIOM PAGE COMPONENT - Add to app.js
+// Complete Axiom GCP Dashboard integrated into Atlas Framework
+// ═══════════════════════════════════════════════════════════════
 
-  const totalInstances = axiomFleets.reduce((sum, fleet) => sum + fleet.instanceCount, 0);
-  const totalCostPerHour = axiomFleets.reduce((sum, fleet) => sum + fleet.costPerHour, 0);
-  const estimatedMonthlyCost = totalCostPerHour * 24 * 30;
+const AxiomPage = () => {
+  const [activeTab, setActiveTab] = useState('controllers');
+  const [controllers, setControllers] = useState([]);
+  const [instances, setInstances] = useState([]);
+  const [scans, setScans] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [deployConfig, setDeployConfig] = useState({
+    fleetName: '',
+    region: 'europe-west1',
+    instanceType: 'n1-standard-1',
+    count: 5
+  });
+  const [scanConfig, setScanConfig] = useState({
+    module: 'subfinder',
+    target: '',
+    fleet: ''
+  });
+
+  // Load data on mount
+  useEffect(() => {
+    loadAxiomData();
+    const interval = setInterval(loadAxiomData, 30000); // Refresh every 30s
+    return () => clearInterval(interval);
+  }, []);
+
+  const loadAxiomData = async () => {
+    try {
+      // Load controllers
+      const ctrlRes = await fetch('/api/controllers');
+      const ctrlData = await ctrlRes.json();
+      if (ctrlData.success) setControllers(ctrlData.controllers);
+
+      // Load instances
+      const instRes = await fetch('/api/axiom/instances');
+      const instData = await instRes.json();
+      if (instData.success) setInstances(instData.instances || []);
+
+      // Load scans
+      const scanRes = await fetch('/api/scans');
+      const scanData = await scanRes.json();
+      if (scanData.success) setScans(scanData.scans || []);
+
+      setLoading(false);
+    } catch (err) {
+      console.error('Failed to load Axiom data:', err);
+      setLoading(false);
+    }
+  };
+
+  const handleDeploy = async () => {
+    try {
+      const res = await fetch('/api/axiom/deploy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(deployConfig)
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('Fleet deployment started!', 'success');
+        loadAxiomData();
+      } else {
+        showToast('Deployment failed: ' + data.error, 'error');
+      }
+    } catch (err) {
+      showToast('Deployment error: ' + err.message, 'error');
+    }
+  };
+
+  const handleStartScan = async () => {
+    try {
+      const res = await fetch('/api/scans/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(scanConfig)
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('Scan started!', 'success');
+        loadAxiomData();
+      } else {
+        showToast('Scan failed: ' + data.error, 'error');
+      }
+    } catch (err) {
+      showToast('Scan error: ' + err.message, 'error');
+    }
+  };
+
+  const runningInstances = instances.filter(i => i.status === 'running').length;
+  const activeScans = scans.filter(s => s.status === 'running').length;
+
+  const totalCost = instances.reduce((sum, i) => {
+    const hourly = 0.05; // Approximate cost per hour
+    return sum + (i.status === 'running' ? hourly : 0);
+  }, 0) * 730; // Monthly estimate
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-24">
+    <div className="axiom-dashboard">
+      {/* Header */}
+      <div className="page-header mb-24">
         <div>
-          <h2>Axiom Multi-Cloud Orchestration</h2>
-          <p className="text-muted">Deploy and manage distributed security tools</p>
+          <h1 className="page-title">
+            <i className="fas fa-satellite-dish" style={{color: '#00d9ff', marginRight: '12px'}}></i>
+            Axiom GCP Dashboard
+          </h1>
+          <p className="text-muted">Distributed security testing infrastructure management</p>
         </div>
-        <button 
-          className="btn btn-primary"
-          onClick={() => setShowDeployFleetModal(true)}
-        >
-          🚀 Deploy Fleet
+        <button className="btn btn-primary" onClick={loadAxiomData} disabled={loading}>
+          <i className="fas fa-sync-alt"></i>
+          {loading ? ' Loading...' : ' Refresh'}
         </button>
       </div>
 
-      <div className="metrics-grid mb-24">
+      {/* Metrics Row */}
+      <div className="grid grid-4 gap-20 mb-24">
         <div className="metric-card">
-          <div className="metric-value">{axiomFleets.length}</div>
-          <div className="metric-label">Active Fleets</div>
+          <div className="metric-value" style={{color: '#00d9ff'}}>
+            {controllers.filter(c => c.is_active).length}
+          </div>
+          <div className="metric-label">Active Controllers</div>
+          <div className="metric-change positive">
+            <i className="fas fa-server"></i> Online
+          </div>
         </div>
+
         <div className="metric-card">
-          <div className="metric-value">{totalInstances}</div>
-          <div className="metric-label">Total Instances</div>
+          <div className="metric-value" style={{color: '#00ff88'}}>
+            {runningInstances}
+          </div>
+          <div className="metric-label">Running Instances</div>
+          <div className="metric-change">
+            {instances.length} Total
+          </div>
         </div>
+
         <div className="metric-card">
-          <div className="metric-value">${totalCostPerHour.toFixed(2)}</div>
-          <div className="metric-label">Cost per Hour</div>
+          <div className="metric-value" style={{color: '#ffaa00'}}>
+            {activeScans}
+          </div>
+          <div className="metric-label">Active Scans</div>
+          <div className="metric-change">
+            {scans.length} Total Jobs
+          </div>
         </div>
+
         <div className="metric-card">
-          <div className="metric-value">${estimatedMonthlyCost.toFixed(0)}</div>
+          <div className="metric-value" style={{color: '#ff5555'}}>
+            \${totalCost.toFixed(2)}
+          </div>
           <div className="metric-label">Est. Monthly Cost</div>
-        </div>
-      </div>
-
-      <div className="card mb-24">
-        <div className="card-header">
-          <h3 className="card-title">Fleet Overview</h3>
-        </div>
-        <div className="table-container">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Fleet Name</th>
-                <th>Provider</th>
-                <th>Instances</th>
-                <th>Regions</th>
-                <th>Status</th>
-                <th>VPN</th>
-                <th>Cost/hr</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {axiomFleets.map(fleet => (
-                <tr key={fleet.id}>
-                  <td className="font-medium">{fleet.name}</td>
-                  <td>
-                    <span className={`status-badge ${fleet.provider.toLowerCase()}`}>
-                      {fleet.provider}
-                    </span>
-                  </td>
-                  <td>{fleet.instanceCount}</td>
-                  <td>{fleet.regions.slice(0, 2).join(', ')}{fleet.regions.length > 2 && '...'}</td>
-                  <td>
-                    <span className={`status-badge ${fleet.status}`}>{fleet.status}</span>
-                  </td>
-                  <td>
-                    {fleet.vpnEnabled ? (
-                      <span style={{color: 'var(--color-vpn-green)'}}>✓ {fleet.vpnNodeId}</span>
-                    ) : (
-                      <span className="text-muted">Disabled</span>
-                    )}
-                  </td>
-                  <td>${fleet.costPerHour}</td>
-                  <td>
-                    <div className="flex gap-4">
-                      <button className="btn btn-sm btn-secondary">SSH</button>
-                      <button className="btn btn-sm btn-danger">Terminate</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div className="card">
-        <div className="card-header">
-          <h3 className="card-title">Instance Details</h3>
-        </div>
-        <div className="card-body">
-          <div className="atlas-grid">
-            {axiomInstances.map(instance => (
-              <div key={instance.id} className="card">
-                <div className="card-body">
-                  <div className="flex justify-between items-start mb-12">
-                    <div>
-                      <h4 className="font-mono text-sm">{instance.instanceId}</h4>
-                      <p className="text-muted text-xs">{instance.region} • {instance.provider}</p>
-                    </div>
-                    <span className={`status-badge ${instance.status}`}>{instance.status}</span>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-8 mb-12 text-sm">
-                    <div>
-                      <span className="text-muted">CPU:</span>
-                      <span className="ml-4">{instance.cpuUsage?.toFixed(1)}%</span>
-                    </div>
-                    <div>
-                      <span className="text-muted">Memory:</span>
-                      <span className="ml-4">{instance.memoryUsage?.toFixed(1)}%</span>
-                    </div>
-                    <div>
-                      <span className="text-muted">Uptime:</span>
-                      <span className="ml-4">{Math.floor(instance.uptime / 3600)}h</span>
-                    </div>
-                    <div>
-                      <span className="text-muted">IP:</span>
-                      <span className="ml-4 font-mono">{instance.publicIp}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-4">
-                    <button className="btn btn-sm btn-secondary">SSH</button>
-                    <button className="btn btn-sm btn-secondary">Logs</button>
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className="metric-change">
+            \${(totalCost/730).toFixed(4)}/hour
           </div>
         </div>
       </div>
 
-      {showDeployFleetModal && (
-        <DeployFleetModal 
-          onClose={() => setShowDeployFleetModal(false)}
-          vpnNodes={vpnNodes}
-        />
-      )}
+      {/* Tab Navigation */}
+      <div className="tabs mb-24">
+        {['controllers', 'deploy', 'instances', 'scans', 'terminal', 'files'].map(tab => (
+          <button
+            key={tab}
+            className={`tab ${activeTab === tab ? 'active' : ''}`}
+            onClick={() => setActiveTab(tab)}
+          >
+            <i className={`fas fa-${
+              tab === 'controllers' ? 'server' :
+              tab === 'deploy' ? 'rocket' :
+              tab === 'instances' ? 'cloud' :
+              tab === 'scans' ? 'crosshairs' :
+              tab === 'terminal' ? 'terminal' : 'folder'
+            }`}></i>
+            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab Content */}
+      <div className="tab-content">
+        {/* Controllers Tab */}
+        {activeTab === 'controllers' && (
+          <div className="card">
+            <div className="card-header">
+              <h3 className="card-title">Axiom Controllers</h3>
+              <button className="btn btn-sm btn-primary">
+                <i className="fas fa-plus"></i> Add Controller
+              </button>
+            </div>
+            <div className="card-body">
+              {controllers.length === 0 ? (
+                <div className="empty-state">
+                  <i className="fas fa-server" style={{fontSize: '3rem', opacity: 0.3}}></i>
+                  <p>No controllers configured</p>
+                </div>
+              ) : (
+                <div className="table-responsive">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Host</th>
+                        <th>Region</th>
+                        <th>Provider</th>
+                        <th>Status</th>
+                        <th>Last Seen</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {controllers.map(ctrl => (
+                        <tr key={ctrl.id}>
+                          <td>
+                            <strong>{ctrl.name}</strong>
+                            {ctrl.is_active && <span className="badge badge-success ml-8">Active</span>}
+                          </td>
+                          <td><code>{ctrl.host}</code></td>
+                          <td>{ctrl.region || 'N/A'}</td>
+                          <td>
+                            <span className="badge" style={{background: 'rgba(0,217,255,0.2)', color: '#00d9ff'}}>
+                              {ctrl.provider || 'GCP'}
+                            </span>
+                          </td>
+                          <td>
+                            <span className={`status-badge status-${ctrl.status || 'unknown'}`}>
+                              {ctrl.status || 'unknown'}
+                            </span>
+                          </td>
+                          <td>{new Date(ctrl.last_seen || Date.now()).toLocaleString()}</td>
+                          <td>
+                            <button className="btn btn-sm btn-secondary">
+                              <i className="fas fa-terminal"></i>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Deploy Tab */}
+        {activeTab === 'deploy' && (
+          <div className="grid grid-2 gap-20">
+            <div className="card">
+              <div className="card-header">
+                <h3 className="card-title">
+                  <i className="fas fa-rocket"></i> Deploy GCP Fleet
+                </h3>
+              </div>
+              <div className="card-body">
+                <div className="form-group">
+                  <label>Fleet Name</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="e.g., recon-fleet-1"
+                    value={deployConfig.fleetName}
+                    onChange={(e) => setDeployConfig({...deployConfig, fleetName: e.target.value})}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Region</label>
+                  <select
+                    className="form-control"
+                    value={deployConfig.region}
+                    onChange={(e) => setDeployConfig({...deployConfig, region: e.target.value})}
+                  >
+                    <option value="europe-west1">europe-west1 (Belgium)</option>
+                    <option value="europe-west3">europe-west3 (Frankfurt)</option>
+                    <option value="us-central1">us-central1 (Iowa)</option>
+                    <option value="us-east1">us-east1 (South Carolina)</option>
+                    <option value="asia-southeast1">asia-southeast1 (Singapore)</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Instance Type</label>
+                  <select
+                    className="form-control"
+                    value={deployConfig.instanceType}
+                    onChange={(e) => setDeployConfig({...deployConfig, instanceType: e.target.value})}
+                  >
+                    <option value="e2-micro">e2-micro (0.5GB RAM) - $7/mo</option>
+                    <option value="n1-standard-1">n1-standard-1 (3.75GB RAM) - $25/mo</option>
+                    <option value="n1-standard-2">n1-standard-2 (7.5GB RAM) - $50/mo</option>
+                    <option value="n1-standard-4">n1-standard-4 (15GB RAM) - $100/mo</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Instance Count</label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    min="1"
+                    max="50"
+                    value={deployConfig.count}
+                    onChange={(e) => setDeployConfig({...deployConfig, count: parseInt(e.target.value)})}
+                  />
+                </div>
+
+                <button
+                  className="btn btn-primary btn-block"
+                  onClick={handleDeploy}
+                  disabled={!deployConfig.fleetName}
+                >
+                  <i className="fas fa-rocket"></i> Deploy Fleet
+                </button>
+              </div>
+            </div>
+
+            <div className="card">
+              <div className="card-header">
+                <h3 className="card-title">Active Deployments</h3>
+              </div>
+              <div className="card-body">
+                {instances.filter(i => i.status === 'pending' || i.status === 'deploying').length === 0 ? (
+                  <div className="empty-state">
+                    <i className="fas fa-rocket" style={{fontSize: '2rem', opacity: 0.3}}></i>
+                    <p className="text-muted">No active deployments</p>
+                  </div>
+                ) : (
+                  instances.filter(i => i.status === 'pending' || i.status === 'deploying').map(inst => (
+                    <div key={inst.name} className="deployment-card mb-12">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <strong>{inst.name}</strong>
+                          <div className="text-sm text-muted">{inst.region}</div>
+                        </div>
+                        <div className="spinner"></div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Instances Tab */}
+        {activeTab === 'instances' && (
+          <div className="card">
+            <div className="card-header">
+              <h3 className="card-title">Running Instances</h3>
+              <div className="flex gap-8">
+                <button className="btn btn-sm btn-secondary">
+                  <i className="fas fa-stop"></i> Stop All
+                </button>
+                <button className="btn btn-sm btn-danger">
+                  <i className="fas fa-trash"></i> Destroy All
+                </button>
+              </div>
+            </div>
+            <div className="card-body">
+              {instances.length === 0 ? (
+                <div className="empty-state">
+                  <i className="fas fa-cloud" style={{fontSize: '3rem', opacity: 0.3}}></i>
+                  <p>No instances running</p>
+                  <button className="btn btn-primary mt-16" onClick={() => setActiveTab('deploy')}>
+                    <i className="fas fa-plus"></i> Deploy Fleet
+                  </button>
+                </div>
+              ) : (
+                <div className="table-responsive">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>External IP</th>
+                        <th>Internal IP</th>
+                        <th>Region</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Uptime</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {instances.map(inst => (
+                        <tr key={inst.name}>
+                          <td><strong>{inst.name}</strong></td>
+                          <td><code>{inst.external_ip || 'N/A'}</code></td>
+                          <td><code className="text-muted">{inst.internal_ip || 'N/A'}</code></td>
+                          <td>{inst.region}</td>
+                          <td><span className="badge badge-info">{inst.type}</span></td>
+                          <td>
+                            <span className={`status-badge status-${inst.status}`}>
+                              {inst.status}
+                            </span>
+                          </td>
+                          <td>{inst.uptime || 'N/A'}</td>
+                          <td>
+                            <div className="flex gap-4">
+                              <button className="btn btn-sm btn-secondary" title="Terminal">
+                                <i className="fas fa-terminal"></i>
+                              </button>
+                              <button className="btn btn-sm btn-warning" title="Restart">
+                                <i className="fas fa-redo"></i>
+                              </button>
+                              <button className="btn btn-sm btn-danger" title="Destroy">
+                                <i className="fas fa-trash"></i>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Scans Tab */}
+        {activeTab === 'scans' && (
+          <div className="grid grid-2 gap-20">
+            <div className="card">
+              <div className="card-header">
+                <h3 className="card-title">
+                  <i className="fas fa-crosshairs"></i> Configure Scan
+                </h3>
+              </div>
+              <div className="card-body">
+                <div className="form-group">
+                  <label>Scan Module</label>
+                  <select
+                    className="form-control"
+                    value={scanConfig.module}
+                    onChange={(e) => setScanConfig({...scanConfig, module: e.target.value})}
+                  >
+                    <option value="subfinder">Subfinder (Subdomain Enum)</option>
+                    <option value="httpx">Httpx (HTTP Probe)</option>
+                    <option value="nuclei">Nuclei (Vulnerability Scan)</option>
+                    <option value="nmap">Nmap (Port Scan)</option>
+                    <option value="ffuf">Ffuf (Fuzzing)</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Target</label>
+                  <textarea
+                    className="form-control"
+                    rows="3"
+                    placeholder="domain.com\nexample.com"
+                    value={scanConfig.target}
+                    onChange={(e) => setScanConfig({...scanConfig, target: e.target.value})}
+                  ></textarea>
+                </div>
+
+                <div className="form-group">
+                  <label>Target Fleet</label>
+                  <select
+                    className="form-control"
+                    value={scanConfig.fleet}
+                    onChange={(e) => setScanConfig({...scanConfig, fleet: e.target.value})}
+                  >
+                    <option value="">Select fleet...</option>
+                    {instances.filter(i => i.status === 'running').map(inst => (
+                      <option key={inst.name} value={inst.name}>{inst.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <button
+                  className="btn btn-primary btn-block"
+                  onClick={handleStartScan}
+                  disabled={!scanConfig.target || !scanConfig.fleet}
+                >
+                  <i className="fas fa-play"></i> Start Scan
+                </button>
+              </div>
+            </div>
+
+            <div className="card">
+              <div className="card-header">
+                <h3 className="card-title">Active Scans</h3>
+              </div>
+              <div className="card-body">
+                {scans.length === 0 ? (
+                  <div className="empty-state">
+                    <i className="fas fa-crosshairs" style={{fontSize: '2rem', opacity: 0.3}}></i>
+                    <p className="text-muted">No active scans</p>
+                  </div>
+                ) : (
+                  scans.map(scan => (
+                    <div key={scan.id} className="scan-card mb-12">
+                      <div className="flex items-center justify-between mb-8">
+                        <div>
+                          <strong>{scan.module}</strong>
+                          <div className="text-sm text-muted">{scan.target}</div>
+                        </div>
+                        <span className={`status-badge status-${scan.status}`}>
+                          {scan.status}
+                        </span>
+                      </div>
+                      <div className="progress-bar">
+                        <div 
+                          className="progress-fill" 
+                          style={{width: `${scan.progress || 0}%`}}
+                        ></div>
+                      </div>
+                      <div className="text-xs text-muted mt-4">
+                        {scan.progress || 0}% complete
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Terminal Tab */}
+        {activeTab === 'terminal' && (
+          <div className="card">
+            <div className="card-header">
+              <h3 className="card-title">
+                <i className="fas fa-terminal"></i> Axiom Terminal
+              </h3>
+              <div className="text-sm">
+                <span className="text-muted">Connected to:</span>
+                <strong className="ml-4">
+                  {controllers.find(c => c.is_active)?.name || 'None'}
+                </strong>
+                <span className="status-badge status-success ml-8">Connected</span>
+              </div>
+            </div>
+            <div className="card-body p-0">
+              <div className="terminal-container">
+                <div className="terminal-output" id="terminal-output">
+                  <div className="terminal-line">
+                    <span className="text-success">Welcome to Axiom Controller Terminal</span>
+                  </div>
+                  <div className="terminal-line">
+                    <span className="text-muted">Type 'help' for available commands</span>
+                  </div>
+                  <div className="terminal-line terminal-prompt">
+                    <span className="text-primary">ubuntu@axiom-controller</span>
+                    <span className="text-muted">:~$</span>
+                  </div>
+                </div>
+                <div className="terminal-input-container">
+                  <span className="terminal-prompt-inline">
+                    <span className="text-primary">ubuntu@axiom-controller</span>
+                    <span className="text-muted">:~$</span>
+                  </span>
+                  <input
+                    type="text"
+                    className="terminal-input"
+                    placeholder="Enter command..."
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        // Handle terminal command
+                        console.log('Command:', e.target.value);
+                        e.target.value = '';
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Files Tab */}
+        {activeTab === 'files' && (
+          <div className="grid grid-2 gap-20">
+            <div className="card">
+              <div className="card-header">
+                <h3 className="card-title">
+                  <i className="fas fa-upload"></i> Upload Files
+                </h3>
+              </div>
+              <div className="card-body">
+                <div 
+                  className="upload-zone"
+                  onClick={() => document.getElementById('file-upload').click()}
+                >
+                  <i className="fas fa-cloud-upload-alt" style={{fontSize: '3rem', opacity: 0.3}}></i>
+                  <p className="mt-12">Click to upload wordlists, target files, or scripts</p>
+                  <input
+                    type="file"
+                    id="file-upload"
+                    multiple
+                    style={{display: 'none'}}
+                    onChange={(e) => {
+                      console.log('Files:', e.target.files);
+                      showToast('Upload started...', 'info');
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="card">
+              <div className="card-header">
+                <h3 className="card-title">
+                  <i className="fas fa-download"></i> Download Results
+                </h3>
+              </div>
+              <div className="card-body">
+                <div className="empty-state">
+                  <i className="fas fa-file-download" style={{fontSize: '2rem', opacity: 0.3}}></i>
+                  <p className="text-muted">No scan results available</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
-}
+};
 
 // Main Dashboard Layout
 function DashboardLayout() {

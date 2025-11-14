@@ -1762,3 +1762,346 @@ body {
   background: var(--color-bg-5);
   color: var(--color-collection-purple);
 }
+/* ========================================
+   Axiom Dashboard Styles
+   ======================================== */
+
+.axiom-dashboard {
+  padding: 0;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--color-charcoal-700);
+  padding: 0;
+  margin-bottom: 24px;
+}
+
+.tab {
+  padding: 12px 24px;
+  background: transparent;
+  border: none;
+  color: var(--color-gray-300);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-bottom: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.tab:hover {
+  color: var(--color-teal-300);
+}
+
+.tab.active {
+  color: var(--color-teal-300);
+  border-bottom-color: var(--color-teal-300);
+}
+
+.tab i {
+  font-size: 1rem;
+}
+
+.tab-content {
+  animation: fadeIn 0.3s ease;
+}
+
+.upload-zone {
+  border: 2px dashed var(--color-charcoal-700);
+  border-radius: 8px;
+  padding: 48px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.upload-zone:hover {
+  border-color: var(--color-teal-300);
+  background: rgba(0,217,255,0.05);
+}
+
+.scan-card {
+  padding: 16px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 8px;
+  border: 1px solid var(--color-charcoal-700);
+}
+
+.progress-bar {
+  height: 4px;
+  background: var(--color-charcoal-700);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00d9ff, #00a8cc);
+  transition: width 0.3s ease;
+}
+
+.terminal-container {
+  background: var(--color-black);
+  border-radius: 0 0 8px 8px;
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+  font-size: 14px;
+}
+
+.terminal-output {
+  padding: 16px;
+  min-height: 400px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.terminal-line {
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.terminal-prompt {
+  display: flex;
+  gap: 8px;
+}
+
+.terminal-input-container {
+  padding: 16px;
+  border-top: 1px solid var(--color-charcoal-700);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.terminal-prompt-inline {
+  display: flex;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.terminal-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--color-white);
+  font-family: inherit;
+  font-size: inherit;
+  padding: 4px 8px;
+}
+
+.terminal-input:focus {
+  outline: none;
+}
+
+.terminal-input::placeholder {
+  color: var(--color-gray-400);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.empty-state i {
+  margin-bottom: 16px;
+}
+
+.deployment-card {
+  padding: 12px;
+  background: rgba(0,217,255,0.05);
+  border-radius: 6px;
+  border: 1px solid rgba(0,217,255,0.2);
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(0,217,255,0.2);
+  border-top-color: #00d9ff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+
+/* ========================================
+   Axiom Dashboard Styles
+   ======================================== */
+
+.axiom-dashboard {
+  padding: 0;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--color-charcoal-700);
+  padding: 0;
+  margin-bottom: 24px;
+}
+
+.tab {
+  padding: 12px 24px;
+  background: transparent;
+  border: none;
+  color: var(--color-gray-300);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-bottom: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.tab:hover {
+  color: var(--color-teal-300);
+}
+
+.tab.active {
+  color: var(--color-teal-300);
+  border-bottom-color: var(--color-teal-300);
+}
+
+.tab i {
+  font-size: 1rem;
+}
+
+.tab-content {
+  animation: fadeIn 0.3s ease;
+}
+
+.upload-zone {
+  border: 2px dashed var(--color-charcoal-700);
+  border-radius: 8px;
+  padding: 48px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.upload-zone:hover {
+  border-color: var(--color-teal-300);
+  background: rgba(0,217,255,0.05);
+}
+
+.scan-card {
+  padding: 16px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 8px;
+  border: 1px solid var(--color-charcoal-700);
+}
+
+.progress-bar {
+  height: 4px;
+  background: var(--color-charcoal-700);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00d9ff, #00a8cc);
+  transition: width 0.3s ease;
+}
+
+.terminal-container {
+  background: var(--color-black);
+  border-radius: 0 0 8px 8px;
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+  font-size: 14px;
+}
+
+.terminal-output {
+  padding: 16px;
+  min-height: 400px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.terminal-line {
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.terminal-prompt {
+  display: flex;
+  gap: 8px;
+}
+
+.terminal-input-container {
+  padding: 16px;
+  border-top: 1px solid var(--color-charcoal-700);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.terminal-prompt-inline {
+  display: flex;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.terminal-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--color-white);
+  font-family: inherit;
+  font-size: inherit;
+  padding: 4px 8px;
+}
+
+.terminal-input:focus {
+  outline: none;
+}
+
+.terminal-input::placeholder {
+  color: var(--color-gray-400);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.empty-state i {
+  margin-bottom: 16px;
+}
+
+.deployment-card {
+  padding: 12px;
+  background: rgba(0,217,255,0.05);
+  border-radius: 6px;
+  border: 1px solid rgba(0,217,255,0.2);
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(0,217,255,0.2);
+  border-top-color: #00d9ff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+

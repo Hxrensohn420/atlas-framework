@@ -1,3 +1,6 @@
+cd ~/cloud-dashboard/exported-assets
+
+cat > .gitignore << 'GITIGNORE'
 # ============================================================================
 # Atlas Framework - Git Ignore Configuration
 # ============================================================================
@@ -5,32 +8,31 @@
 # ============================================================================
 # ENVIRONMENT FILES (SECRETS!) - NEVER COMMIT!
 # ============================================================================
+# Block ALL .env files except .example templates
 .env
 .env.*
 .env.local
 .env.*.local
 *.env
 
-# Allow .example files
+# Allow .example files (templates without secrets)
 !.env.example
 !.env.*.example
 
-# ============================================================================
-# DOCKER VOLUMES & DATA (ROOT LEVEL ONLY!)
-# ============================================================================
-# Only block root-level data directory
-/data/
+# Legacy env files
+.env.atlas*
 
-# Block uploads subdirectories
-backend/data/uploads/
-frontend/data/uploads/
 
-# Other Docker volumes
+# ============================================================================
+# DOCKER VOLUMES & DATA
+# ============================================================================
+data/
 docker-data/
 postgres-data/
 redis-data/
 axiom-data/
 kong-data/
+
 
 # ============================================================================
 # KEYS & CERTIFICATES (CRITICAL SECURITY!)
@@ -42,8 +44,9 @@ keys/
 *.p12
 *.pfx
 
-# Allow keys directory structure
+# Allow keys directory structure (but not actual keys)
 !keys/.gitkeep
+
 
 # ============================================================================
 # NODE.JS
@@ -57,38 +60,56 @@ yarn-error.log*
 package-lock.json
 yarn.lock
 
+
 # ============================================================================
 # LOGS
 # ============================================================================
 *.log
 logs/
 *.log.*
+npm-debug.log
+yarn-debug.log
+
 
 # ============================================================================
 # OPERATING SYSTEM FILES
 # ============================================================================
+# macOS
 .DS_Store
 .AppleDouble
 .LSOverride
+
+# Windows
 Thumbs.db
 ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
+
+# Linux
 .directory
+
 
 # ============================================================================
 # IDE & EDITORS
 # ============================================================================
+# VSCode
 .vscode/
 *.code-workspace
+
+# IntelliJ / JetBrains
 .idea/
 *.iml
 *.iws
+
+# Vim
 *.swp
 *.swo
 *~
+
+# Sublime Text
 *.sublime-project
 *.sublime-workspace
+
 
 # ============================================================================
 # TEMPORARY FILES
@@ -99,12 +120,20 @@ temp/
 *.temp
 *.cache
 
+
 # ============================================================================
 # DATABASE FILES
 # ============================================================================
 *.sqlite
 *.sqlite3
 *.db
+
+
+# ============================================================================
+# DOCKER
+# ============================================================================
+.dockerignore
+
 
 # ============================================================================
 # BUILD ARTIFACTS
@@ -115,3 +144,6 @@ out/
 *.zip
 *.tar
 *.tar.gz
+GITIGNORE
+
+echo "✅ Clean .gitignore created!"
